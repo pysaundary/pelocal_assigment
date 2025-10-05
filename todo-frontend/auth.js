@@ -1,5 +1,5 @@
 // Adjust to FastAPI origin
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'http://0.0.0.0:8000';
 
 function setToken(t){ localStorage.setItem('token', t); }
 function getToken(){ return localStorage.getItem('token'); }
