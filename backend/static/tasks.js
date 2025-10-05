@@ -1,4 +1,5 @@
-if (!getToken()) window.location.href = 'index.html';
+// redirect to auth if no token
+if (!getToken()) location.href = '/';
 
 const tbody = document.getElementById('tasks-tbody');
 const form = document.getElementById('task-form');
@@ -13,7 +14,7 @@ const reloadBtn = document.getElementById('reload');
 const fp = document.getElementById('filter-priority');
 const fd = document.getElementById('filter-done');
 
-logoutBtn.addEventListener('click', () => { clearToken(); window.location.href = 'index.html'; });
+logoutBtn.addEventListener('click', () => { clearToken(); location.href = '/'; });
 
 function readForm() {
   return {
@@ -46,7 +47,6 @@ function resetForm() {
 function escapeHtml(str){
   return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
 function badge(v){ return v ? 'success' : 'secondary'; }
 
 async function loadTasks() {
@@ -100,20 +100,11 @@ function addRow(task) {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const { id, title, description, priority, is_done } = readForm();
-  if (!title) {
-    formMsg.textContent = 'Title is required';
-    return;
-  }
+  if (!title) { formMsg.textContent = 'Title is required'; return; }
   formMsg.textContent = '';
   try {
     if (id) {
-      const body = {};
-      // Only send changed fields for PATCH behavior; for simplicity sending all non-empty fields is acceptable
-      body.title = title;
-      body.description = description;
-      body.priority = priority;
-      body.is_done = is_done;
-      await apiFetch(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
+      await apiFetch(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify({ title, description, priority, is_done }) });
     } else {
       await apiFetch('/tasks/', { method: 'POST', body: JSON.stringify({ title, description, priority, is_done }) });
     }
@@ -128,6 +119,6 @@ reloadBtn.addEventListener('click', () => loadTasks());
 fp.addEventListener('change', () => loadTasks());
 fd.addEventListener('change', () => loadTasks());
 
-// init
+// initial
 resetForm();
 loadTasks();

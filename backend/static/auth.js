@@ -1,10 +1,12 @@
-// Adjust to FastAPI origin
+// API origin
 const API_BASE = 'http://0.0.0.0:8000';
 
+// token helpers
 function setToken(t){ localStorage.setItem('token', t); }
 function getToken(){ return localStorage.getItem('token'); }
 function clearToken(){ localStorage.removeItem('token'); }
 
+// fetch helper
 async function apiFetch(path, options = {}) {
   const token = getToken();
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
