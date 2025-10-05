@@ -42,7 +42,7 @@ class LetsStartTheCode:
 
     def _validate_env(self):
         """Fail early if required env vars missing."""
-        required = ["SECRET_KEY", "HOST", "BACK_END_PORT", "FRONT_END_PORT", "SQLLITE_URL"]
+        required = ["SECRET_KEY", "HOST", "BACK_END_PORT", "FRONT_END_PORT", "SQLLITE_URL","ALGO"]
         missing = [key for key in required if not os.getenv(key)]
         if missing:
             raise RuntimeError(f"Missing environment variables: {', '.join(missing)}")
@@ -62,10 +62,11 @@ class LetsStartTheCode:
         )
         api_logger = LoggerFactory(api_cfg).get_logger()
         self.collector.addOrUpdate("api_logger", api_logger, api_logger)
-
+        self.collector.addOrUpdate("base_dir",self.base_dir)
         # Store useful config in collector
         config_data = {
             "secret_key": os.getenv("SECRET_KEY"),
+            "algo":os.getenv("ALGO"),
             "host": os.getenv("HOST"),
             "backend_port": os.getenv("BACK_END_PORT"),
             "frontend_port": os.getenv("FRONT_END_PORT"),
@@ -80,10 +81,18 @@ class LetsStartTheCode:
 
 
     def run(self):
-        """Entry point to start async tasks."""
-        event_loop = asyncio.get_event_loop()
-        event_loop.create_task(self._launch_code())
-        event_loop.run_forever()
+        loop = asyncio.new_event_loop()
+        try:
+            asyncio.set_event_loop(loop) 
+            loop.create_task(self._launch_code())
+            loop.run_forever()
+        finally:
+            loop.stop()
+            pending = asyncio.all_tasks(loop=loop)
+            for t in pending:
+                t.cancel()
+            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            loop.close()
 
 
 

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Pysaundary | Auth</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    :root{
+      --mint-bg: #e0ffe9;
+      --mint-accent: #2e8b57;
+      --mint-accent-2: #1f6b43;
+      --mint-text: #1b4730;
+      --mint-border: #b6f1c7;
+    }
+    body{
+      background: #ffffff;
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    .brand{
+      color: var(--mint-accent);
+      font-weight: 600;
+      letter-spacing: .5px;
+    }
+    .auth-card{
+      background: var(--mint-bg);
+      border: 1px solid var(--mint-border);
+      border-radius: 14px;
+    }
+    .form-control, .form-select{
+      border-radius: 10px;
+      border-color: var(--mint-border);
+    }
+    .btn-mint{
+      background: #0d6efd; /* keep familiar Bootstrap primary for contrast */
+      border-color: #0d6efd;
+    }
+    .btn-mint:hover{ filter: brightness(.95); }
+    .text-muted-small{ color: #6c757d; font-size: .9rem; }
+    .toast-mint{
+      --bs-toast-bg: #d5f9dd;
+      --bs-toast-header-bg: #c0f3cc;
+      --bs-toast-color: #123b28;
+      border-color: var(--mint-border);
+    }
+    .top-right{
+      position: fixed; right: 1rem; top: 1rem; z-index: 1080;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar bg-white">
+    <div class="container">
+      <span class="navbar-brand mb-0 h1 brand">Pysaundary</span>
+    </div>
+  </nav>
+
+  <main class="container d-flex align-items-center justify-content-center py-5">
+    <div class="auth-card shadow-sm p-4" style="max-width:520px; width:100%;">
+      <form id="auth-form" class="mx-auto" style="max-width: 440px;">
+        <div class="mb-3">
+          <label class="form-label">Email address</label>
+          <input id="email" type="email" class="form-control" autocomplete="username" required>
+          <div class="form-text text-muted-small">We’ll never share your email with anyone else.</div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Password</label>
+          <input id="password" type="password" class="form-control" autocomplete="current-password" required>
+        </div>
+        <div class="form-check my-3">
+          <input class="form-check-input" type="checkbox" id="is-login" checked>
+          <label class="form-check-label" for="is-login">for login</label>
+        </div>
+        <button class="btn btn-primary btn-mint px-4" type="submit" id="submit-btn">Signup</button>
+      </form>
+    </div>
+  </main>
+
+  <div class="top-right">
+    <div id="toast" class="toast align-items-center toast-mint" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header">
+        <strong class="me-auto">Status</strong>
+        <small>now</small>
+        <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body" id="toast-body">Success</div>
+    </div>
+  </div>
+
+  <script src="./auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // redirect if already authed
+    if (getToken()) location.href = 'tasks.html';
+
+    const base = API_BASE;
+    const toastEl = document.getElementById('toast');
+    const toast = new bootstrap.Toast(toastEl, { delay: 2200 });
+    const toastBody = document.getElementById('toast-body');
+    const setToast = (msg) => { toastBody.textContent = msg; toast.show(); };
+
+    const form = document.getElementById('auth-form');
+    const isLogin = document.getElementById('is-login');
+    const submitBtn = document.getElementById('submit-btn');
+
+    const updateBtn = () => { submitBtn.textContent = isLogin.checked ? 'Login' : 'Signup'; };
+    isLogin.addEventListener('change', updateBtn);
+    updateBtn();
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const path = isLogin.checked ? '/auth/login/' : '/auth/register_user/';
+
+      try{
+        const res = await fetch(`${base}${path}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json().catch(()=>({}));
+        if (!res.ok || data.status === false) {
+          setToast(data.message || `HTTP ${res.status}`);
+          return;
+        }
+        const token = data?.data?.token || data?.token;
+        if (token) setToken(token);
+        setToast(isLogin.checked ? 'Logged in' : 'Registered');
+        setTimeout(()=> location.href = 'tasks.html', 400);
+      }catch{
+        setToast('Network error');
+      }
+    });
+  </script>
+</body>
+</html>

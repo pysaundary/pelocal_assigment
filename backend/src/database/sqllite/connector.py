@@ -20,3 +20,9 @@ async def get_async_db(db : str = "todo.db" ):
     async with aiosqlite.connect(db) as db:
         db.row_factory = aiosqlite.Row
         yield db
+
+async def get_async_db_conn():
+    db_path = "todo.db"  # read from env/config internally
+    async with aiosqlite.connect(db_path) as conn:
+        conn.row_factory = aiosqlite.Row
+        yield conn
